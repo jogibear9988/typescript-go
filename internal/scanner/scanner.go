@@ -2461,7 +2461,7 @@ func GetECMALineOfPosition(sourceFile ast.SourceFileLike, pos int) int {
 
 func GetECMALineAndCharacterOfPosition(sourceFile ast.SourceFileLike, pos int) (line int, character int) {
 	lineMap := GetECMALineStarts(sourceFile)
-	charOffsets := sourceFile.AsSourceFile().ECMACharOffsets()
+	charOffsets := sourceFile.ECMACharOffsets()
 	line = ComputeLineOfPosition(lineMap, pos)
 
 	// Use precomputed character offsets for O(1) lookup instead of O(n) rune counting

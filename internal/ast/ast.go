@@ -11459,6 +11459,7 @@ func GetDeclarationName(declaration *Node) string {
 type SourceFileLike interface {
 	Text() string
 	ECMALineMap() []core.TextPos
+	ECMACharOffsets() []int
 }
 
 type CommentRange struct {
