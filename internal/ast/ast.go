@@ -11003,8 +11003,10 @@ type SourceFile struct {
 
 	// Fields set by ECMALineMap
 
-	ecmaLineMapMu sync.RWMutex
-	ecmaLineMap   []core.TextPos
+	ecmaLineMapMu     sync.RWMutex
+	ecmaLineMap       []core.TextPos
+	ecmaCharOffsetsMu sync.RWMutex
+	ecmaCharOffsets   []int
 
 	// Fields set by language service
 
@@ -11184,6 +11186,24 @@ func (node *SourceFile) ECMALineMap() []core.TextPos {
 		}
 	}
 	return lineMap
+}
+
+// ECMACharOffsets returns the cumulative rune counts at each byte position in the source file.
+// This enables O(1) character position lookups by using: character = charOffsets[endPos] - charOffsets[lineStartPos]
+func (node *SourceFile) ECMACharOffsets() []int {
+	node.ecmaCharOffsetsMu.RLock()
+	charOffsets := node.ecmaCharOffsets
+	node.ecmaCharOffsetsMu.RUnlock()
+	if charOffsets == nil {
+		node.ecmaCharOffsetsMu.Lock()
+		defer node.ecmaCharOffsetsMu.Unlock()
+		charOffsets = node.ecmaCharOffsets
+		if charOffsets == nil {
+			charOffsets = core.ComputeECMACharOffsets(node.Text())
+			node.ecmaCharOffsets = charOffsets
+		}
+	}
+	return charOffsets
 }
 
 // GetNameTable returns a map of all names in the file to their positions.
@@ -11439,6 +11459,7 @@ func GetDeclarationName(declaration *Node) string {
 type SourceFileLike interface {
 	Text() string
 	ECMALineMap() []core.TextPos
+	ECMACharOffsets() []int
 }
 
 type CommentRange struct {

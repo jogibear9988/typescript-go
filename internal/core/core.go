@@ -440,6 +440,33 @@ func ComputeECMALineStartsSeq(text string) iter.Seq[TextPos] {
 	}
 }
 
+// ComputeECMACharOffsets computes cumulative rune (character) counts at each byte position.
+// This enables O(1) character position lookups by using: character = charOffsets[endPos] - charOffsets[lineStartPos]
+func ComputeECMACharOffsets(text string) []int {
+	result := make([]int, len(text)+1)
+	runeCount := 0
+	pos := 0
+
+	for pos < len(text) {
+		result[pos] = runeCount
+
+		_, size := utf8.DecodeRuneInString(text[pos:])
+		if size == 0 {
+			break
+		}
+
+		for offset := 1; offset < size && pos+offset < len(text); offset++ {
+			result[pos+offset] = runeCount
+		}
+
+		runeCount++
+		pos += size
+	}
+
+	result[len(text)] = runeCount
+	return result
+}
+
 func PositionToLineAndCharacter(position int, lineStarts []TextPos) (line int, character int) {
 	line = max(sort.Search(len(lineStarts), func(i int) bool {
 		return int(lineStarts[i]) > position
