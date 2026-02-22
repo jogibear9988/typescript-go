@@ -450,9 +450,13 @@ func ComputeECMACharOffsets(text string) []int {
 	for pos < len(text) {
 		result[pos] = runeCount
 
-		ch, size := utf8.DecodeRuneInString(text[pos:])
+		_, size := utf8.DecodeRuneInString(text[pos:])
 		if size == 0 {
 			break
+		}
+
+		for offset := 1; offset < size && pos+offset < len(text); offset++ {
+			result[pos+offset] = runeCount
 		}
 
 		runeCount++
